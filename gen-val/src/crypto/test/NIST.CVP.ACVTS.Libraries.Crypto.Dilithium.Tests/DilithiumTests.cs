@@ -335,7 +335,7 @@ public class DilithiumTests
         }
         tbsCertWriter.PopSequence();
         // public key 
-        tbsCertWriter.WriteOctetString(key.pk);
+        tbsCertWriter.WriteBitString(key.pk);
         // end pk info
         tbsCertWriter.PopSequence();
         // end tbsCertificate
@@ -352,7 +352,8 @@ public class DilithiumTests
         writer.PushSequence();
         // der-encoded tbsCertificate
         writer.WriteEncodedValue(message);
-        // signature algorithm oid
+        // signature algorithm
+        writer.PushSequence();
         switch(parameterSet)
         {
             case DilithiumParameterSet.ML_DSA_44:
@@ -365,11 +366,13 @@ public class DilithiumTests
                 writer.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.8.7");
                 break;
         }
+        writer.PopSequence();
         // signature value
         writer.WriteBitString(signature);
         // end cert sequence
         writer.PopSequence();
         // output
+        Console.WriteLine("Building X.509 certificate with {0}...", parameterSet.ToString());
         Console.WriteLine(System.Security.Cryptography.PemEncoding.Write("CERTIFICATE", writer.Encode()));
         // DONE!
     }
