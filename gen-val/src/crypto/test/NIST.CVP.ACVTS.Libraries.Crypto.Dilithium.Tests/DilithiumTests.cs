@@ -255,4 +255,122 @@ public class DilithiumTests
         
         Assert.Pass();
     }
+
+    [Test]
+    [TestCase(DilithiumParameterSet.ML_DSA_44)]
+    [TestCase(DilithiumParameterSet.ML_DSA_65)]
+    [TestCase(DilithiumParameterSet.ML_DSA_87)]
+    public void X509GenerationTest(DilithiumParameterSet parameterSet)
+    {
+        // initialize Dilithium
+        var seed = new BitString("0000000000000000000000000000000000000000000000000000000000000000").Bits;
+        var dilithium = new Dilithium(new DilithiumParameters(parameterSet), new NativeShaFactory(), new EntropyProvider(new Random800_90()));
+        var key = dilithium.GenerateKey(seed);
+        // create an AsnWriter with DER for tbsCertificate
+        var tbsCertWriter = new System.Formats.Asn1.AsnWriter(System.Formats.Asn1.AsnEncodingRules.DER);
+        // begin tbscCertificate
+        tbsCertWriter.PushSequence();
+        // version
+        tbsCertWriter.WriteEncodedValue(new byte[] {0xA0, 0x03, 0x02, 0x01, 0x02});
+        // serial number
+        tbsCertWriter.WriteInteger(49587);
+        // signature algorithm identifier
+        tbsCertWriter.PushSequence();
+        switch(parameterSet)
+        {
+            case DilithiumParameterSet.ML_DSA_44:
+                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.4.4");
+                break;
+            case DilithiumParameterSet.ML_DSA_65:
+                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.6.5");
+                break;
+            case DilithiumParameterSet.ML_DSA_87:
+                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.8.7");
+                break;
+        }
+        tbsCertWriter.PopSequence();
+        // begin issuer
+        tbsCertWriter.PushSequence();
+        tbsCertWriter.PushSetOf();
+        // issuer name
+        tbsCertWriter.PushSequence();
+        tbsCertWriter.WriteObjectIdentifier("2.5.4.3");
+        tbsCertWriter.WriteCharacterString(System.Formats.Asn1.UniversalTagNumber.UTF8String, "ACVTS Test TA");
+        tbsCertWriter.PopSequence();
+        // end issuer
+        tbsCertWriter.PopSetOf();
+        tbsCertWriter.PopSequence();
+        // validity
+        tbsCertWriter.PushSequence();
+        var dateOffset = System.DateTimeOffset.UtcNow;
+        tbsCertWriter.WriteUtcTime(dateOffset, 2049);
+        tbsCertWriter.WriteUtcTime(dateOffset + new System.TimeSpan(365, 0, 0, 0), 2049);
+        tbsCertWriter.PopSequence();
+        // begin subject
+        tbsCertWriter.PushSequence();
+        tbsCertWriter.PushSetOf();
+        // subject name
+        tbsCertWriter.PushSequence();
+        tbsCertWriter.WriteObjectIdentifier("2.5.4.3");
+        tbsCertWriter.WriteCharacterString(System.Formats.Asn1.UniversalTagNumber.UTF8String, "ACVTS Test TA");
+        tbsCertWriter.PopSequence();
+        // end subject
+        tbsCertWriter.PopSetOf();
+        tbsCertWriter.PopSequence();
+        // begin subject pk info
+        tbsCertWriter.PushSequence();
+        // algorithm identifier
+        tbsCertWriter.PushSequence();
+        switch(parameterSet)
+        {
+            case DilithiumParameterSet.ML_DSA_44:
+                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.4.4");
+                break;
+            case DilithiumParameterSet.ML_DSA_65:
+                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.6.5");
+                break;
+            case DilithiumParameterSet.ML_DSA_87:
+                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.8.7");
+                break;
+        }
+        tbsCertWriter.PopSequence();
+        // public key 
+        tbsCertWriter.WriteOctetString(key.pk);
+        // end pk info
+        tbsCertWriter.PopSequence();
+        // end tbsCertificate
+        tbsCertWriter.PopSequence();
+        // encode tbsCertificate as message to be signed
+        var message = tbsCertWriter.Encode();
+        // sign message
+        var signature = dilithium.Sign(key.sk, new BitArray(message), true);
+        // verify signature
+        Assert.IsTrue(dilithium.Verify(key.pk, signature, new BitArray(message)), "x509 certificate signature verification");
+        // now for certificate structure
+        var writer = new System.Formats.Asn1.AsnWriter(System.Formats.Asn1.AsnEncodingRules.DER);
+        // begin cert sequence
+        writer.PushSequence();
+        // der-encoded tbsCertificate
+        writer.WriteEncodedValue(message);
+        // signature algorithm oid
+        switch(parameterSet)
+        {
+            case DilithiumParameterSet.ML_DSA_44:
+                writer.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.4.4");
+                break;
+            case DilithiumParameterSet.ML_DSA_65:
+                writer.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.6.5");
+                break;
+            case DilithiumParameterSet.ML_DSA_87:
+                writer.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.8.7");
+                break;
+        }
+        // signature value
+        writer.WriteBitString(signature);
+        // end cert sequence
+        writer.PopSequence();
+        // output
+        Console.WriteLine(System.Security.Cryptography.PemEncoding.Write("CERTIFICATE", writer.Encode()));
+        // DONE!
+    }
 }
