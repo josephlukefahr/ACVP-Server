@@ -279,13 +279,13 @@ public class DilithiumTests
         switch(parameterSet)
         {
             case DilithiumParameterSet.ML_DSA_44:
-                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.4.4");
+                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.7.4.4");
                 break;
             case DilithiumParameterSet.ML_DSA_65:
-                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.6.5");
+                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.7.6.5");
                 break;
             case DilithiumParameterSet.ML_DSA_87:
-                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.8.7");
+                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.7.8.7");
                 break;
         }
         tbsCertWriter.PopSequence();
@@ -324,13 +324,13 @@ public class DilithiumTests
         switch(parameterSet)
         {
             case DilithiumParameterSet.ML_DSA_44:
-                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.4.4");
+                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.7.4.4");
                 break;
             case DilithiumParameterSet.ML_DSA_65:
-                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.6.5");
+                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.7.6.5");
                 break;
             case DilithiumParameterSet.ML_DSA_87:
-                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.8.7");
+                tbsCertWriter.WriteObjectIdentifier("1.3.6.1.4.1.2.267.7.8.7");
                 break;
         }
         tbsCertWriter.PopSequence();
@@ -357,13 +357,13 @@ public class DilithiumTests
         switch(parameterSet)
         {
             case DilithiumParameterSet.ML_DSA_44:
-                writer.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.4.4");
+                writer.WriteObjectIdentifier("1.3.6.1.4.1.2.267.7.4.4");
                 break;
             case DilithiumParameterSet.ML_DSA_65:
-                writer.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.6.5");
+                writer.WriteObjectIdentifier("1.3.6.1.4.1.2.267.7.6.5");
                 break;
             case DilithiumParameterSet.ML_DSA_87:
-                writer.WriteObjectIdentifier("1.3.6.1.4.1.2.267.12.8.7");
+                writer.WriteObjectIdentifier("1.3.6.1.4.1.2.267.7.8.7");
                 break;
         }
         writer.PopSequence();
