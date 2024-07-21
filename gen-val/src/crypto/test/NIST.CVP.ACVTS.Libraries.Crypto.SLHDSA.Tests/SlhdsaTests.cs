@@ -323,5 +323,228 @@ public class SlhdsaTests
         
         Assert.That(result.Success, Is.EqualTo(false));
     }
+
+    [Test]
+    [TestCase(SlhdsaParameterSet.SLH_DSA_SHA2_128s)] 
+    [TestCase(SlhdsaParameterSet.SLH_DSA_SHAKE_128s)]
+    [TestCase(SlhdsaParameterSet.SLH_DSA_SHA2_128f)]
+    [TestCase(SlhdsaParameterSet.SLH_DSA_SHAKE_128f)]
+    [TestCase(SlhdsaParameterSet.SLH_DSA_SHA2_192s)]
+    [TestCase(SlhdsaParameterSet.SLH_DSA_SHAKE_192s)]
+    [TestCase(SlhdsaParameterSet.SLH_DSA_SHA2_192f)]
+    [TestCase(SlhdsaParameterSet.SLH_DSA_SHAKE_192f)]
+    [TestCase(SlhdsaParameterSet.SLH_DSA_SHA2_256s)]
+    [TestCase(SlhdsaParameterSet.SLH_DSA_SHAKE_256s)]
+    [TestCase(SlhdsaParameterSet.SLH_DSA_SHA2_256f)]
+    [TestCase(SlhdsaParameterSet.SLH_DSA_SHAKE_256f)]
+    public void X509GenerationTest(SlhdsaParameterSet slhdsaParameterSet)
+    {
+        // grab all the values associated w/ the selected parameter set
+        SlhdsaParameterSetAttributes slhdsaParameterSetAttributes = AttributesHelper.GetParameterSetAttribute(slhdsaParameterSet);
+        // build the inputs to SlhdsaKeyGen
+        byte[] nRandomBytesForSkSeed = new byte[slhdsaParameterSetAttributes.N];
+        byte[] nRandomBytesForSkPrf = new byte[slhdsaParameterSetAttributes.N];
+        byte[] nRandomBytesForPkSeed = new byte[slhdsaParameterSetAttributes.N];
+        for (int i = 0; i < slhdsaParameterSetAttributes.N; i++)
+        {
+            nRandomBytesForSkSeed[i] = 0x1f;
+            nRandomBytesForSkPrf[i] = 0x2e;
+            nRandomBytesForPkSeed[i] = 0x3d;
+        }
+        // create the key pair
+        var keyPair = _subject.SlhKeyGen(nRandomBytesForSkSeed, nRandomBytesForSkPrf, nRandomBytesForPkSeed,
+            slhdsaParameterSetAttributes);
+        // create an AsnWriter with DER for tbsCertificate
+        var tbsCertWriter = new System.Formats.Asn1.AsnWriter(System.Formats.Asn1.AsnEncodingRules.DER);
+        // begin tbscCertificate
+        tbsCertWriter.PushSequence();
+        // version
+        tbsCertWriter.WriteEncodedValue(new byte[] {0xA0, 0x03, 0x02, 0x01, 0x02});
+        // serial number
+        tbsCertWriter.WriteInteger(49587);
+        // signature algorithm identifier
+        tbsCertWriter.PushSequence();
+        switch(slhdsaParameterSet)
+        {
+            case SlhdsaParameterSet.SLH_DSA_SHA2_128s:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.4.16");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_128s:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.7.16");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHA2_128f:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.4.13");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_128f:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.7.13");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHA2_192s:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.5.12");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_192s:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.8.12");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHA2_192f:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.5.10");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_192f:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.8.10");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHA2_256s:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.6.12");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_256s:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.9.12");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHA2_256f:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.6.10");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_256f:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.9.10");
+                break;
+        }
+        tbsCertWriter.PopSequence();
+        // begin issuer
+        tbsCertWriter.PushSequence();
+        tbsCertWriter.PushSetOf();
+        // issuer name
+        tbsCertWriter.PushSequence();
+        tbsCertWriter.WriteObjectIdentifier("2.5.4.3");
+        tbsCertWriter.WriteCharacterString(System.Formats.Asn1.UniversalTagNumber.UTF8String, "ACVTS Test TA");
+        tbsCertWriter.PopSequence();
+        // end issuer
+        tbsCertWriter.PopSetOf();
+        tbsCertWriter.PopSequence();
+        // validity
+        tbsCertWriter.PushSequence();
+        var dateOffset = System.DateTimeOffset.UtcNow;
+        tbsCertWriter.WriteUtcTime(dateOffset, 2049);
+        tbsCertWriter.WriteUtcTime(dateOffset + new System.TimeSpan(365, 0, 0, 0), 2049);
+        tbsCertWriter.PopSequence();
+        // begin subject
+        tbsCertWriter.PushSequence();
+        tbsCertWriter.PushSetOf();
+        // subject name
+        tbsCertWriter.PushSequence();
+        tbsCertWriter.WriteObjectIdentifier("2.5.4.3");
+        tbsCertWriter.WriteCharacterString(System.Formats.Asn1.UniversalTagNumber.UTF8String, "ACVTS Test TA");
+        tbsCertWriter.PopSequence();
+        // end subject
+        tbsCertWriter.PopSetOf();
+        tbsCertWriter.PopSequence();
+        // begin subject pk info
+        tbsCertWriter.PushSequence();
+        // algorithm identifier
+        tbsCertWriter.PushSequence();
+        switch(slhdsaParameterSet)
+        {
+            case SlhdsaParameterSet.SLH_DSA_SHA2_128s:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.4.16");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_128s:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.7.16");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHA2_128f:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.4.13");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_128f:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.7.13");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHA2_192s:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.5.12");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_192s:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.8.12");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHA2_192f:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.5.10");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_192f:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.8.10");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHA2_256s:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.6.12");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_256s:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.9.12");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHA2_256f:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.6.10");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_256f:
+                tbsCertWriter.WriteObjectIdentifier("1.3.9999.6.9.10");
+                break;
+        }
+        tbsCertWriter.PopSequence();
+        // public key 
+        tbsCertWriter.WriteBitString(keyPair.PublicKey.GetBytes());
+        // end pk info
+        tbsCertWriter.PopSequence();
+        // end tbsCertificate
+        tbsCertWriter.PopSequence();
+        // encode tbsCertificate as message to be signed
+        var message = tbsCertWriter.Encode();
+        // calculate the slhdsa signature of message
+        var signature = _subject.SlhSignDeterministic(message, keyPair.PrivateKey, slhdsaParameterSetAttributes);
+        // verify
+        var result = _subject.SlhVerify(message, signature, keyPair.PublicKey, slhdsaParameterSetAttributes);
+        Assert.IsTrue(result.Success, "x509 certificate signature verification");
+        // now for certificate structure
+        var writer = new System.Formats.Asn1.AsnWriter(System.Formats.Asn1.AsnEncodingRules.DER);
+        // begin cert sequence
+        writer.PushSequence();
+        // der-encoded tbsCertificate
+        writer.WriteEncodedValue(message);
+        // signature algorithm
+        writer.PushSequence();
+        switch(slhdsaParameterSet)
+        {
+            case SlhdsaParameterSet.SLH_DSA_SHA2_128s:
+                writer.WriteObjectIdentifier("1.3.9999.6.4.16");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_128s:
+                writer.WriteObjectIdentifier("1.3.9999.6.7.16");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHA2_128f:
+                writer.WriteObjectIdentifier("1.3.9999.6.4.13");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_128f:
+                writer.WriteObjectIdentifier("1.3.9999.6.7.13");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHA2_192s:
+                writer.WriteObjectIdentifier("1.3.9999.6.5.12");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_192s:
+                writer.WriteObjectIdentifier("1.3.9999.6.8.12");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHA2_192f:
+                writer.WriteObjectIdentifier("1.3.9999.6.5.10");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_192f:
+                writer.WriteObjectIdentifier("1.3.9999.6.8.10");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHA2_256s:
+                writer.WriteObjectIdentifier("1.3.9999.6.6.12");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_256s:
+                writer.WriteObjectIdentifier("1.3.9999.6.9.12");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHA2_256f:
+                writer.WriteObjectIdentifier("1.3.9999.6.6.10");
+                break;
+            case SlhdsaParameterSet.SLH_DSA_SHAKE_256f:
+                writer.WriteObjectIdentifier("1.3.9999.6.9.10");
+                break;
+        }
+        writer.PopSequence();
+        // signature value
+        writer.WriteBitString(signature);
+        // end cert sequence
+        writer.PopSequence();
+        // output
+        Console.WriteLine("Building X.509 certificate with {0}...", slhdsaParameterSet.ToString());
+        Console.WriteLine(System.Security.Cryptography.PemEncoding.Write("CERTIFICATE", writer.Encode()));
+        // DONE!
+    }
     
 }
